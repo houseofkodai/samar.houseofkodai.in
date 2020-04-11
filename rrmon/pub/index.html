@@ -112,6 +112,7 @@ _pause = false;
 _pause2 = false;
 _rrmin = parseInt(_qs.rrmin) || 500;
 _rrmax = parseInt(_qs.rrmax) || 1200;
+_rrwin = parseInt(_qs.rrwin) || 0;
 _pubws = null;
 
 function log(s) {
@@ -193,8 +194,9 @@ function onHRM(event) {
     _ptime = new Date(); /* store for next time */
     _el.status.innerHTML = hhmmss(_stime) + ' &#x2764; ' + _rrlist[_rrlist.length-1] + '/' + v.heartRate;
 
-    let sdsd = sd(adiff(_rrlist));
-    let sdrr = sd(_rrlist);
+    let sdlist = (_rrwin > 0) ? _rrlist.slice((_rrlist.length-_rrwin), _rrlist.length) : _rrlist;
+    let sdsd = sd(adiff(sdlist));
+    let sdrr = sd(sdlist);
     sdrr = Math.round(sdrr);
     let sd1 = (1 / Math.sqrt(2)) * sdsd;
     sd1 = Math.round(sd1);
