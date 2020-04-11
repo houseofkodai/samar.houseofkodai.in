@@ -1,0 +1,226 @@
+<!doctype html><html lang="en">
+<head>
+<!-- Happy B'day Dr. Samar J. Singh -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<style>
+html, body {margin:0 auto;width:100%;height:100%;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif;}
+img, object, embed, canvas {max-width:100%;height:auto;}
+body {background:#FAFAFA;overflow: hidden;}
+
+.navbar {padding:.5rem;cursor:pointer;font-size:1.6rem;}
+.flr {display:flex;flex-direction:row;justify-content:space-between;}
+.fls {flex:flex-start;}
+.fle {flex:flex-end;}
+.flm {flex:1;text-align:center;}
+.statusbar {padding:.5rem;text-align:center;font-size:1.6rem;background:lightgray;cursor:pointer;}
+.statusbar div {flex:1;}
+.svg-icon {path,polygon,rect{fill: #4691f6;}}
+#start {padding-top:.25rem;background:grey;color:white;}
+
+div.smoothie-chart-tooltip {
+  background: #444;
+  padding: 1em;
+  font-family: consolas;
+  color: white;
+  font-size: 1.4rem;
+  pointer-events: none;
+}
+#chart {flex:1;}
+</style>
+<title>Great Adventures @ 72</title>
+</head>
+<body>
+<div class="navbar flr">
+<svg width="34" viewBox="0 0 200 200">
+  <g transform="translate(100 100)">
+    <path transform="translate(-50 -50)" fill="tomato" d="M92.71,7.27L92.71,7.27c-9.71-9.69-25.46-9.69-35.18,0L50,14.79l-7.54-7.52C32.75-2.42,17-2.42,7.29,7.27v0 c-9.71,9.69-9.71,25.41,0,35.1L50,85l42.71-42.63C102.43,32.68,102.43,16.96,92.71,7.27z"></path>
+    <animateTransform 
+     attributeName="transform" 
+     type="scale" 
+     values="1; 1.5; 1.25; 1.5; 1.5; 1;" 
+     dur="1s" 
+     repeatCount="indefinite"
+     additive="sum">      
+    </animateTransform>
+  </g>
+</svg>
+ <div class="flm" id="start">Start</div>
+ <div class="fle" id="save">
+<svg width="32" class="svg-icon" viewBox="0 0 20 20">
+  <path d="M17.064,4.656l-2.05-2.035C14.936,2.544,14.831,2.5,14.721,2.5H3.854c-0.229,0-0.417,0.188-0.417,0.417v14.167c0,0.229,0.188,0.417,0.417,0.417h12.917c0.229,0,0.416-0.188,0.416-0.417V4.952C17.188,4.84,17.144,4.733,17.064,4.656M6.354,3.333h7.917V10H6.354V3.333z M16.354,16.667H4.271V3.333h1.25v7.083c0,0.229,0.188,0.417,0.417,0.417h8.75c0.229,0,0.416-0.188,0.416-0.417V3.886l1.25,1.239V16.667z M13.402,4.688v3.958c0,0.229-0.186,0.417-0.417,0.417c-0.229,0-0.417-0.188-0.417-0.417V4.688c0-0.229,0.188-0.417,0.417-0.417C13.217,4.271,13.402,4.458,13.402,4.688"></path>
+</svg>
+ </div>
+</div>
+<div class="flr statusbar" id="statusbar">
+ <div class="fls" id="s1">~bpm</div>
+ <div class="fle" id="s2">SD</div>
+ <div class="fle" id="s3">SD1~</div>
+ <div class="fle" id="s4">SD2~</div>
+</div>
+<canvas id="chart" style="width:100%;"></canvas>
+<script>
+Date.now=Date.now||function(){return(new Date).getTime()};var Util={extend:function(){arguments[0]=arguments[0]||{};for(var t=1;t<arguments.length;t++)for(var e in arguments[t])arguments[t].hasOwnProperty(e)&&("object"==typeof arguments[t][e]?arguments[t][e]instanceof Array?arguments[0][e]=arguments[t][e]:arguments[0][e]=Util.extend(arguments[0][e],arguments[t][e]):arguments[0][e]=arguments[t][e]);return arguments[0]},binarySearch:function(t,e){for(var i=0,s=t.length;i<s;){var a=i+s>>1;e<t[a][0]?s=a:i=a+1}return i}};function TimeSeries(t){this.options=Util.extend({},TimeSeries.defaultOptions,t),this.disabled=!1,this.clear()}function SmoothieChart(t){this.options=Util.extend({},SmoothieChart.defaultChartOptions,t),this.seriesSet=[],this.currentValueRange=1,this.currentVisMinValue=0,this.lastRenderTimeMillis=0,this.lastChartTimestamp=0,this.mousemove=this.mousemove.bind(this),this.mouseout=this.mouseout.bind(this)}TimeSeries.defaultOptions={resetBoundsInterval:3e3,resetBounds:!0},TimeSeries.prototype.clear=function(){this.data=[],this.maxValue=Number.NaN,this.minValue=Number.NaN},TimeSeries.prototype.resetBounds=function(){if(this.data.length){this.maxValue=this.data[0][1],this.minValue=this.data[0][1];for(var t=1;t<this.data.length;t++){var e=this.data[t][1];e>this.maxValue&&(this.maxValue=e),e<this.minValue&&(this.minValue=e)}}else this.maxValue=Number.NaN,this.minValue=Number.NaN},TimeSeries.prototype.append=function(t,e,i){for(var s=this.data.length-1;s>=0&&this.data[s][0]>t;)s--;-1===s?this.data.splice(0,0,[t,e]):this.data.length>0&&this.data[s][0]===t?i?(this.data[s][1]+=e,e=this.data[s][1]):this.data[s][1]=e:s<this.data.length-1?this.data.splice(s+1,0,[t,e]):this.data.push([t,e]),this.maxValue=isNaN(this.maxValue)?e:Math.max(this.maxValue,e),this.minValue=isNaN(this.minValue)?e:Math.min(this.minValue,e)},TimeSeries.prototype.dropOldData=function(t,e){for(var i=0;this.data.length-i>=e&&this.data[i+1][0]<t;)i++;0!==i&&this.data.splice(0,i)},SmoothieChart.tooltipFormatter=function(t,e){for(var i,s=[(this.options.timestampFormatter||SmoothieChart.timeFormatter)(new Date(t))],a=0;a<e.length;++a)""!==(i=e[a].series.options.tooltipLabel||"")&&(i+=" "),s.push('<span style="color:'+e[a].series.options.strokeStyle+'">'+i+this.options.yMaxFormatter(e[a].value,this.options.labels.precision)+"</span>");return s.join("<br>")},SmoothieChart.defaultChartOptions={millisPerPixel:20,enableDpiScaling:!0,yMinFormatter:function(t,e){return parseFloat(t).toFixed(e)},yMaxFormatter:function(t,e){return parseFloat(t).toFixed(e)},yIntermediateFormatter:function(t,e){return parseFloat(t).toFixed(e)},maxValueScale:1,minValueScale:1,interpolation:"bezier",scaleSmoothing:.125,maxDataSetLength:2,scrollBackwards:!1,displayDataFromPercentile:1,grid:{fillStyle:"#000000",strokeStyle:"#777777",lineWidth:1,sharpLines:!1,millisPerLine:1e3,verticalSections:2,borderVisible:!0},labels:{fillStyle:"#ffffff",disabled:!1,fontSize:10,fontFamily:"monospace",precision:2,showIntermediateLabels:!1,intermediateLabelSameAxis:!0},title:{text:"",fillStyle:"#ffffff",fontSize:15,fontFamily:"monospace",verticalAlign:"middle"},horizontalLines:[],tooltip:!1,tooltipLine:{lineWidth:1,strokeStyle:"#BBBBBB"},tooltipFormatter:SmoothieChart.tooltipFormatter,nonRealtimeData:!1,responsive:!1,limitFPS:0},SmoothieChart.AnimateCompatibility={requestAnimationFrame:function(t,e){return(window.requestAnimationFrame||window.webkitRequestAnimationFrame||window.mozRequestAnimationFrame||window.oRequestAnimationFrame||window.msRequestAnimationFrame||function(t){return window.setTimeout(function(){t(Date.now())},16)}).call(window,t,e)},cancelAnimationFrame:function(t){return(window.cancelAnimationFrame||function(t){clearTimeout(t)}).call(window,t)}},SmoothieChart.defaultSeriesPresentationOptions={lineWidth:1,strokeStyle:"#ffffff"},SmoothieChart.prototype.addTimeSeries=function(t,e){this.seriesSet.push({timeSeries:t,options:Util.extend({},SmoothieChart.defaultSeriesPresentationOptions,e)}),t.options.resetBounds&&t.options.resetBoundsInterval>0&&(t.resetBoundsTimerId=setInterval(function(){t.resetBounds()},t.options.resetBoundsInterval))},SmoothieChart.prototype.removeTimeSeries=function(t){for(var e=this.seriesSet.length,i=0;i<e;i++)if(this.seriesSet[i].timeSeries===t){this.seriesSet.splice(i,1);break}t.resetBoundsTimerId&&clearInterval(t.resetBoundsTimerId)},SmoothieChart.prototype.getTimeSeriesOptions=function(t){for(var e=this.seriesSet.length,i=0;i<e;i++)if(this.seriesSet[i].timeSeries===t)return this.seriesSet[i].options},SmoothieChart.prototype.bringToFront=function(t){for(var e=this.seriesSet.length,i=0;i<e;i++)if(this.seriesSet[i].timeSeries===t){var s=this.seriesSet.splice(i,1);this.seriesSet.push(s[0]);break}},SmoothieChart.prototype.streamTo=function(t,e){this.canvas=t,this.delay=e,this.start()},SmoothieChart.prototype.getTooltipEl=function(){return this.tooltipEl||(this.tooltipEl=document.createElement("div"),this.tooltipEl.className="smoothie-chart-tooltip",this.tooltipEl.style.position="absolute",this.tooltipEl.style.display="none",document.body.appendChild(this.tooltipEl)),this.tooltipEl},SmoothieChart.prototype.updateTooltip=function(){var t=this.getTooltipEl();if(this.mouseover&&this.options.tooltip){for(var e=this.lastChartTimestamp,i=this.options.scrollBackwards?e-this.mouseX*this.options.millisPerPixel:e-(this.canvas.offsetWidth-this.mouseX)*this.options.millisPerPixel,s=[],a=0;a<this.seriesSet.length;a++){var o=this.seriesSet[a].timeSeries;if(!o.disabled){var r=Util.binarySearch(o.data,i);r>0&&r<o.data.length&&s.push({series:this.seriesSet[a],index:r,value:o.data[r][1]})}}s.length?(t.innerHTML=this.options.tooltipFormatter.call(this,i,s),t.style.display="block"):t.style.display="none"}else t.style.display="none"},SmoothieChart.prototype.mousemove=function(t){this.mouseover=!0,this.mouseX=t.offsetX,this.mouseY=t.offsetY,this.mousePageX=t.pageX,this.mousePageY=t.pageY;var e=this.getTooltipEl();e.style.top=Math.round(this.mousePageY)+"px",e.style.left=Math.round(this.mousePageX)+"px",this.updateTooltip()},SmoothieChart.prototype.mouseout=function(){this.mouseover=!1,this.mouseX=this.mouseY=-1,this.tooltipEl&&(this.tooltipEl.style.display="none")},SmoothieChart.prototype.resize=function(){var t,e,i=this.options.enableDpiScaling&&window?window.devicePixelRatio:1;this.options.responsive?(t=this.canvas.offsetWidth,e=this.canvas.offsetHeight,t!==this.lastWidth&&(this.lastWidth=t,this.canvas.setAttribute("width",Math.floor(t*i).toString()),this.canvas.getContext("2d").scale(i,i)),e!==this.lastHeight&&(this.lastHeight=e,this.canvas.setAttribute("height",Math.floor(e*i).toString()),this.canvas.getContext("2d").scale(i,i))):1!==i&&(t=parseInt(this.canvas.getAttribute("width")),e=parseInt(this.canvas.getAttribute("height")),this.originalWidth&&Math.floor(this.originalWidth*i)===t||(this.originalWidth=t,this.canvas.setAttribute("width",Math.floor(t*i).toString()),this.canvas.style.width=t+"px",this.canvas.getContext("2d").scale(i,i)),this.originalHeight&&Math.floor(this.originalHeight*i)===e||(this.originalHeight=e,this.canvas.setAttribute("height",Math.floor(e*i).toString()),this.canvas.style.height=e+"px",this.canvas.getContext("2d").scale(i,i)))},SmoothieChart.prototype.start=function(){if(!this.frame){this.canvas.addEventListener("mousemove",this.mousemove),this.canvas.addEventListener("mouseout",this.mouseout);var t=function(){this.frame=SmoothieChart.AnimateCompatibility.requestAnimationFrame(function(){if(this.options.nonRealtimeData){var e=new Date(0),i=this.seriesSet.reduce(function(t,e){var i=e.timeSeries.data,s=Math.round(this.options.displayDataFromPercentile*i.length)-1;if(s=(s=s>=0?s:0)<=i.length-1?s:i.length-1,i&&i.length>0){var a=i[s][0];t=t>a?t:a}return t}.bind(this),e);this.render(this.canvas,i>e?i:null)}else this.render();t()}.bind(this))}.bind(this);t()}},SmoothieChart.prototype.stop=function(){this.frame&&(SmoothieChart.AnimateCompatibility.cancelAnimationFrame(this.frame),delete this.frame,this.canvas.removeEventListener("mousemove",this.mousemove),this.canvas.removeEventListener("mouseout",this.mouseout))},SmoothieChart.prototype.updateValueRange=function(){for(var t=this.options,e=Number.NaN,i=Number.NaN,s=0;s<this.seriesSet.length;s++){var a=this.seriesSet[s].timeSeries;a.disabled||(isNaN(a.maxValue)||(e=isNaN(e)?a.maxValue:Math.max(e,a.maxValue)),isNaN(a.minValue)||(i=isNaN(i)?a.minValue:Math.min(i,a.minValue)))}if(null!=t.maxValue?e=t.maxValue:e*=t.maxValueScale,null!=t.minValue?i=t.minValue:i-=Math.abs(i*t.minValueScale-i),this.options.yRangeFunction){var o=this.options.yRangeFunction({min:i,max:e});i=o.min,e=o.max}if(!isNaN(e)&&!isNaN(i)){var r=e-i-this.currentValueRange,n=i-this.currentVisMinValue;this.isAnimatingScale=Math.abs(r)>.1||Math.abs(n)>.1,this.currentValueRange+=t.scaleSmoothing*r,this.currentVisMinValue+=t.scaleSmoothing*n}this.valueRange={min:i,max:e}},SmoothieChart.prototype.render=function(t,e){var i=Date.now();if(!(this.options.limitFPS>0&&i-this.lastRenderTimeMillis<1e3/this.options.limitFPS)){if(!this.isAnimatingScale){var s=Math.min(1e3/6,this.options.millisPerPixel);if(i-this.lastRenderTimeMillis<s)return}this.resize(),this.updateTooltip(),this.lastRenderTimeMillis=i,t=t||this.canvas,e=e||i-(this.delay||0),e-=e%this.options.millisPerPixel,this.lastChartTimestamp=e;var a=t.getContext("2d"),o=this.options,r={top:0,left:0,width:t.clientWidth,height:t.clientHeight},n=e-r.width*o.millisPerPixel,l=function(t){var e=t-this.currentVisMinValue;return 0===this.currentValueRange?r.height:r.height-Math.round(e/this.currentValueRange*r.height)}.bind(this),h=function(t){return o.scrollBackwards?Math.round((e-t)/o.millisPerPixel):Math.round(r.width-(e-t)/o.millisPerPixel)};if(this.updateValueRange(),a.font=o.labels.fontSize+"px "+o.labels.fontFamily,a.save(),a.translate(r.left,r.top),a.beginPath(),a.rect(0,0,r.width,r.height),a.clip(),a.save(),a.fillStyle=o.grid.fillStyle,a.clearRect(0,0,r.width,r.height),a.fillRect(0,0,r.width,r.height),a.restore(),a.save(),a.lineWidth=o.grid.lineWidth,a.strokeStyle=o.grid.strokeStyle,o.grid.millisPerLine>0){a.beginPath();for(var m=e-e%o.grid.millisPerLine;m>=n;m-=o.grid.millisPerLine){var d=h(m);o.grid.sharpLines&&(d-=.5),a.moveTo(d,0),a.lineTo(d,r.height)}a.stroke(),a.closePath()}for(var u=1;u<o.grid.verticalSections;u++){var c=Math.round(u*r.height/o.grid.verticalSections);o.grid.sharpLines&&(c-=.5),a.beginPath(),a.moveTo(0,c),a.lineTo(r.width,c),a.stroke(),a.closePath()}if(o.grid.borderVisible&&(a.beginPath(),a.strokeRect(0,0,r.width,r.height),a.closePath()),a.restore(),o.horizontalLines&&o.horizontalLines.length)for(var p=0;p<o.horizontalLines.length;p++){var f=o.horizontalLines[p],g=Math.round(l(f.value))-.5;a.strokeStyle=f.color||"#ffffff",a.lineWidth=f.lineWidth||1,a.beginPath(),a.moveTo(0,g),a.lineTo(r.width,g),a.stroke(),a.closePath()}for(var v=0;v<this.seriesSet.length;v++){a.save();var S=this.seriesSet[v].timeSeries;if(!S.disabled){var y=S.data,b=this.seriesSet[v].options;S.dropOldData(n,o.maxDataSetLength),a.lineWidth=b.lineWidth,a.strokeStyle=b.strokeStyle,a.beginPath();for(var x=0,w=0,T=0,P=0,V=0;V<y.length&&1!==y.length;V++){var F=h(y[V][0]),N=l(y[V][1]);if(0===V)x=F,w=N,a.moveTo(F,N);else switch(o.interpolation){case"linear":case"line":a.lineTo(F,N);break;case"bezier":default:a.bezierCurveTo(Math.round((T+F)/2),P,Math.round(T+F)/2,N,F,N);break;case"step":a.lineTo(F,P),a.lineTo(F,N)}T=F,P=N}y.length>1&&(b.fillStyle&&(o.scrollBackwards?(a.lineTo(T,r.height+b.lineWidth),a.lineTo(x,r.height+b.lineWidth),a.lineTo(x,w)):(a.lineTo(r.width+b.lineWidth+1,P),a.lineTo(r.width+b.lineWidth+1,r.height+b.lineWidth+1),a.lineTo(x,r.height+b.lineWidth)),a.fillStyle=b.fillStyle,a.fill()),b.strokeStyle&&"none"!==b.strokeStyle&&a.stroke(),a.closePath()),a.restore()}}if(o.tooltip&&this.mouseX>=0&&(a.lineWidth=o.tooltipLine.lineWidth,a.strokeStyle=o.tooltipLine.strokeStyle,a.beginPath(),a.moveTo(this.mouseX,0),a.lineTo(this.mouseX,r.height),a.closePath(),a.stroke(),this.updateTooltip()),!o.labels.disabled&&!isNaN(this.valueRange.min)&&!isNaN(this.valueRange.max)){var C=o.yMaxFormatter(this.valueRange.max,o.labels.precision),M=o.yMinFormatter(this.valueRange.min,o.labels.precision),k=o.scrollBackwards?0:r.width-a.measureText(C).width-2,B=o.scrollBackwards?0:r.width-a.measureText(M).width-2;a.fillStyle=o.labels.fillStyle,a.fillText(C,k,o.labels.fontSize),a.fillText(M,B,r.height-2)}if(o.labels.showIntermediateLabels&&!isNaN(this.valueRange.min)&&!isNaN(this.valueRange.max)&&o.grid.verticalSections>0){var L=(this.valueRange.max-this.valueRange.min)/o.grid.verticalSections,R=r.height/o.grid.verticalSections;for(u=1;u<o.grid.verticalSections;u++){c=r.height-Math.round(u*R);o.grid.sharpLines&&(c-=.5);var A=o.yIntermediateFormatter(this.valueRange.min+u*L,o.labels.precision);intermediateLabelPos=o.labels.intermediateLabelSameAxis?o.scrollBackwards?0:r.width-a.measureText(A).width-2:o.scrollBackwards?r.width-a.measureText(A).width-2:0,a.fillText(A,intermediateLabelPos,c-o.grid.lineWidth)}}if(o.timestampFormatter&&o.grid.millisPerLine>0){var W=o.scrollBackwards?a.measureText(M).width:r.width-a.measureText(M).width+4;for(m=e-e%o.grid.millisPerLine;m>=n;m-=o.grid.millisPerLine){d=h(m);if(!o.scrollBackwards&&d<W||o.scrollBackwards&&d>W){var D=new Date(m),E=o.timestampFormatter(D),z=a.measureText(E).width;W=o.scrollBackwards?d+z+2:d-z-2,a.fillStyle=o.labels.fillStyle,o.scrollBackwards?a.fillText(E,d,r.height-2):a.fillText(E,d-z,r.height-2)}}}if(""!==o.title.text){a.font=o.title.fontSize+"px "+o.title.fontFamily;var I=o.scrollBackwards?r.width-a.measureText(o.title.text).width-2:2;if("bottom"==o.title.verticalAlign){a.textBaseline="bottom";var X=r.height}else if("middle"==o.title.verticalAlign){a.textBaseline="middle";X=r.height/2}else{a.textBaseline="top";X=0}a.fillStyle=o.title.fillStyle,a.fillText(o.title.text,I,X)}a.restore()}},SmoothieChart.timeFormatter=function(t){function e(t){return(t<10?"0":"")+t}return e(t.getHours())+":"+e(t.getMinutes())+":"+e(t.getSeconds())};
+var _el = {};
+var _rrlist = [];
+var _stime;
+var _timer;
+var _bldev;
+var _hrmCharacterstic;
+var _chart;
+_ts = [new TimeSeries(),new TimeSeries(),new TimeSeries(),new TimeSeries(),new TimeSeries()];
+_ss = [{ strokeStyle: 'rgba(0, 255, 0, 1)', fillStyle: 'rgba(0, 255, 0, 0.2)', lineWidth: 4 },
+       { strokeStyle: 'rgba(0, 255, 0, 1)', fillStyle: 'rgba(0, 255, 0, 0.2)', lineWidth: 4 },
+       { strokeStyle: 'rgba(0, 255, 0, 1)', fillStyle: 'rgba(0, 255, 0, 0.2)', lineWidth: 4 },
+       { strokeStyle: 'rgba(0, 255, 0, 1)', fillStyle: 'rgba(0, 255, 0, 0.2)', lineWidth: 4 },
+       { strokeStyle: 'rgba(0, 255, 0, 1)', fillStyle: 'rgba(0, 255, 0, 0.2)', lineWidth: 4 }];
+_tsindex = 0;
+_pause = false;
+
+function log(s) {
+  console.log(s);
+}
+
+function sd(a) {
+  let n = a.length;
+  let mean = a.reduce((a,b) => a+b)/n;
+  return Math.sqrt(a.map(x => Math.pow(x-mean,2)).reduce((a,b) => a+b)/n);  
+}
+
+function adiff(a) {
+  let n = a.length;
+  if (1 == n) { return a; }
+  let r = [];
+  for (i=1;i<n;i++) { r.push((a[i]-a[i-1])) }
+  return r;
+}
+
+function onHeartRateData(evt) {
+  let dv = evt.target.value;
+  let bpm = dv.getUint8(1);
+  let rr = dv.getUint16(5);
+  _rrlist.push(rr);
+  _el.s1.innerText = bpm;
+
+  let sdsd = sd(adiff(_rrlist));
+  let sdrr = sd(_rrlist);
+  let sd1 = (1 / Math.sqrt(2)) * sdsd //width of poincare cloud
+  let sd2 = Math.sqrt((2 * sdrr ** 2) - (0.5 * sdsd ** 2)) //length of poincare cloud
+  _el.s2.innerText = Math.round(sdrr) //.toFixed(2);
+  _el.s3.innerText = Math.round(sd1) //.toFixed(2);
+  _el.s4.innerText = Math.round(sd2) //.toFixed(2);
+  let now = (new Date()).getTime();
+  _ts[0].append(now, rr);
+  _ts[1].append(now, bpm);
+  _ts[2].append(now, sdrr);
+  _ts[3].append(now, sd1);
+  _ts[4].append(now, sd2);
+}
+
+function onStartClick(evt) {
+  console.log('onStartClick');
+
+  if (!_bldev) {
+    log('Selecting device to pair... ');
+    navigator.bluetooth.requestDevice({
+      acceptAllDevices: true,
+      optionalServices: ['0000180d-0000-1000-8000-00805f9b34fb']})
+    .then(function(device){
+      _bldev = device;
+      _bldev.addEventListener('gattserverdisconnected', function(){_hrmCharacterstic = null;});
+      onStartClick();})
+    .catch(function(error) {log(error);});
+  } else if (!_bldev.gatt.connected) {
+    log('Connecting to device '+_bldev.name+'...');
+    _bldev.gatt.connect()
+    .then(function(server){
+      log('Getting Service...');
+      return server.getPrimaryService('heart_rate');})
+    .then(function(service) {
+      log('Getting Charactistic...')
+      return service.getCharacteristic('heart_rate_measurement');})
+    .then(function(characterstic){
+      _hrmCharacterstic = characterstic;
+      onStartClick();})
+    .catch(function(error) {log(error);});
+  } else if (_hrmCharacterstic) {
+    if (_timer) {
+      _hrmCharacterstic.stopNotifications()
+      .then(function(){
+        _pause = true;
+        clearInterval(_timer);
+        _el.start.style.background = 'blue';
+        _el.start.innerText = 'Start';
+        _timer = null;
+        _chart.stop();
+        _hrmCharacterstic.removeEventListener('characteristicvaluechanged', onHeartRateData);
+        log('Stopped.');
+      })
+      .catch(function(error) {log(error);});
+    } else {
+      _hrmCharacterstic.startNotifications()
+      .then(function() {
+        _rrlist = [];
+        _pause = false;
+        _chart.start();
+        _el.start.style.background = 'red';
+        _el.start.innerText = 'Stop (0s)'
+        _stime = new Date();
+        _timer = setInterval(function() {
+          let delta = Math.round(((new Date()) - _stime)/1000);
+          _el.start.innerText = 'Stop (' + delta+'s)';
+        }, 1000)
+        log('Started...');
+        _hrmCharacterstic.addEventListener('characteristicvaluechanged', onHeartRateData);
+      })
+      .catch(function(error) {log(error);});
+    }
+  };
+}
+
+function onChartDblClick(evt) {
+  if (!_timer) { return; }
+  _pause = !_pause;
+  if (_pause) {_chart.stop();} else {_chart.start();}
+}
+
+function onSaveClick(evt) {
+  let a = document.createElement('a');
+  a.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(_rrlist.join('\n')));
+  a.setAttribute('download', ((new Date()).toISOString()+'.txt'));
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+function toggleTimeSeries(evt) {
+  _chart.removeTimeSeries(_ts[_tsindex]);
+  _tsindex++;
+  if (_tsindex == _ts.length) { _tsindex = 0; }
+  _chart.addTimeSeries(_ts[_tsindex], _ss[_tsindex]);
+}
+
+function main() {
+  _el.start = document.getElementById('start');
+  _el.save = document.getElementById('save');
+  _el.statusbar = document.getElementById('statusbar');
+  _el.statusbar.addEventListener('click', toggleTimeSeries);
+  _el.s1 = document.getElementById('s1');
+  _el.s2 = document.getElementById('s2');
+  _el.s3 = document.getElementById('s3');
+  _el.s4 = document.getElementById('s4');
+  _el.chart = document.getElementById('chart');
+  _el.start.addEventListener('click', onStartClick);
+  _el.save.addEventListener('click', onSaveClick);
+  _chart = new SmoothieChart({labels:{fontSize:18},millisPerPixel:100,tooltip:true,responsive: true});millisPerPixel:100,
+  _chart.addTimeSeries(_ts[0], _ss[0]);
+  _chart.streamTo(_el.chart, 100);
+  setTimeout(function(){_chart.stop();},10);
+  _el.chart.addEventListener('dblclick', onChartDblClick);
+}
+window.addEventListener('load', function(){setTimeout(main,0)}, false)
+</script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+<!doctype html><html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="google-signin-client_id" content="1066931268236-4gv7tlnq2e0dv0c1bftr12bne0a6mn20.apps.googleusercontent.com">
+<style>
+html {height: 100%;box-sizing:border-box;}
+img, object, embed {max-width:100%;height:auto;}
+body {bottom:0;height:100%;left:0;margin:0;overflow:hidden;position:absolute;top:0;width:100%;display:flex;align-items:center;justify-content:center;background-color:#7dbfff;}
+
+</style>
+<title>rrmon: Respiratory Rate Monitor</title>
+<script src="https://apis.google.com/js/platform.js" async defer></script>
+</head>
+<body>
+
+<div class="g-signin2" data-onsuccess="onSignIn"></div>
+<pre id="log"></pre>
+<a href="#" onclick="signOut();">Sign out</a>
+
+<script>
+/* 
+The Google Sign-in library requires that 3rd party cookies and data not be blocked by the browser:
+
+https://developers.google.com/identity/sign-in/web/troubleshooting#third-party_cookies_and_data_blocked
+
+More details are available in this thread:
+
+google/google-api-javascript-client#260
+
+Although the maintainer appears to be working on a partial solution, the recommendation at the moment is to either catch the error and alert the user or implement a server-side flow instead.
+ */
+function onSignIn(googleUser) {
+  var profile = googleUser.getBasicProfile();
+  document.getElementById('log').innerText = JSON.stringify(profile, null, 2);
+  console.log('ID: ' + profile.getId()); // Do not send to your backend! Use an ID token instead.
+  console.log('Name: ' + profile.getName());
+  console.log('Image URL: ' + profile.getImageUrl());
+  console.log('Email: ' + profile.getEmail()); // This is null if the 'email' scope is not present.
+}
+function signOut() {
+  var auth2 = gapi.auth2.getAuthInstance();
+  auth2.signOut().then(function () {
+    console.log('User signed out.');
+  });
+}
+function main() {
+}
+window.addEventListener('load', function(){setTimeout(main,0)}, false)
+</script>
+</body>
+</html>
