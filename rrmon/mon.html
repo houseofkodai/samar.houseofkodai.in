@@ -1,0 +1,74 @@
+<!doctype html><html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<title>chatBox</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body {margin:0 auto;line-height:1.6;background:#FAFAFA;display:flex;flex-direction:column;align-items:center;}
+img, object, embed {max-width:100%;height:auto;}
+
+#chatBox {height:100vh;display:flex;flex-direction:column;width:50rem;}
+#chatHistory {
+ padding:.25rem;
+ flex: 1 1 auto;
+ overflow-y: auto;
+ min-height: 0px;
+}
+#chatInput { width:100%; flex: 0 0 2rem; display: flex; border: 1px solid #ddd; }
+#chatInput > input[type=text] { flex: 1 1 auto; border: 1px solid #eee;}
+#chatInput > input[type=button] { flex: 0 0 20%; border: 1px solid #eee; }
+
+</style>
+</head>
+<body>
+
+<div id="chatBox">
+ <div id="chatHistory"></div>
+ <div id="chatInput"><input id="chatText" type="text" /><input id="chatBtn" type="button" value="Send" /></div>
+</div>
+
+<script>
+var _el={};
+var _ws;
+
+function addMsg(s) {
+  let p = document.createElement('p');
+  p.textContent = s;
+  _el.chatHistory.appendChild(p);
+  _el.chatHistory.scrollTop = p.offsetTop;
+  _el.chatText.focus();
+}
+
+function sendMsg() {
+  let s = _el.chatText.value;
+  s = s.trim();
+  if (s.length < 1) { return; };
+  _el.chatText.value = '';
+  addMsg('me: ' + s);
+  if (_ws) {_ws.send(s);};
+}
+
+function main() {
+  _el.chatHistory = document.getElementById('chatHistory');
+  _el.chatText = document.getElementById('chatText');
+  _el.chatBtn = document.getElementById('chatBtn');
+  _el.chatBtn.addEventListener('click', sendMsg);
+  _el.chatText.addEventListener('keyup', function(e) {if (e.keyCode == 13) { sendMsg(); }});
+  _el.chatText.focus();
+
+  try{
+    _ws = new WebSocket("wss://samar.houseofkodai.in/rr/v1");
+    _ws.onopen = function () {addMsg('connected.');};
+    _ws.onmessage = function (evt) {addMsg(evt.data);};
+    _ws.onclose = function () {addMsg('disconnected.');_ws = null;};
+  } catch(e) {
+    addMsg(e.toString());
+  }
+}
+window.addEventListener('load', function(){setTimeout(main,0)}, false)
+</script>
+</body>
+</html>
