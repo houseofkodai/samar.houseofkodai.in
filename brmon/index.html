@@ -227,8 +227,8 @@ class VideoCap {
     //console.log('VideoCap.onmount');
     navigator.mediaDevices.enumerateDevices().then((devices) => {
       let devlist = [el('option', 'Select Camera')];
-      devices.filter((d) => d.kind === 'videoinput').forEach((k,v) => {
-        devlist.push(el('option', {'value':k.deviceId}, k.label));
+      devices.filter((d) => d.kind === 'videoinput').forEach((k,i) => {
+        devlist.push(el('option', {'value':k.deviceId}, (k.label || 'videoinput-'+i)));
       });
       if (devlist.length > 1) {
         this.elSelectVideoDevice.addEventListener('input',this.selectVideoDevice,false);
