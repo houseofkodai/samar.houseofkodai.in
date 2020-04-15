@@ -299,11 +299,11 @@ class VideoCap {
   videoPause = (evt) => {
     //this.elStatus.innerText = 'Paused.';
     cancelAnimationFrame(this.rafID);
+    this.elSave.style.display = 'block';
   }
   videoEnded = (evt) => {
     //console.log('videoEnded');
     cancelAnimationFrame(this.rafID);
-    //this.elStatus.innerText = 'Done.';
     this.elSave.style.display = 'block';
   }
   saveClick = (evt) => {
