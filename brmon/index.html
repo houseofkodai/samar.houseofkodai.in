@@ -175,7 +175,6 @@ class VideoCap {
     //console.log('VideoCap', options);
     this.options = options;
     this.el = el('.relative.flex.justify-center.items-center', [
-      this.elFile = el('input', {type:'file', accept: 'video/*'}),
       this.elVideo = el('video', {controls:true, style:{display:'none'}}),
       //this.elVideo = el('video', {src:'test.mkv', style:{display:'none'}}),
       this.elGraph = el('canvas.absolute.self-start.w-100.h4.bg-black.o-70', {style:{display:'none'}}),
@@ -188,6 +187,7 @@ class VideoCap {
         [this.elStatus = el('span.pointer'),
          this.elSave = el('span.pointer', {style:{display:'none'}}, 'Save')
       ]),
+      this.elFile = el('input', {type:'file', accept: 'video/*'}),
     ]);
     this.lastVideoTime = 0;
     this.lastFrameTime = 0;
