@@ -3,7 +3,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <link rel="icon" href="data:;base64,iVBORw0KGgo=">
-<title>brmon-0.1: Breath Rate Monitor</title>
+<title>brmon-0.2: Breath Rate Monitor</title>
 <link rel="stylesheet" href="https://unpkg.com/tachyons@4.10.0/css/tachyons.min.css"/>
 <script src="https://redom.js.org/redom.min.js"></script>
 </head>
@@ -205,7 +205,10 @@ class VideoCap {
         [this.elStatus = el('span.pointer'),
          this.elSave = el('span.pointer', {style:{display:'none'}}, 'Save')
       ]),
-      this.elFile = el('input.absolute.self-start', {type:'file', accept: 'video/*'}),
+      el('#videoInput.absolute',[
+        this.elFile = el('input', {type:'file', accept: 'video/*'}),
+        this.elSelectVideoDevice = el('select', {style:{display:'none'}})
+      ])
     ]);
     this.lastVideoTime = 0;
     this.lastFrameTime = 0;
@@ -222,6 +225,40 @@ class VideoCap {
   }
   onmount() {
     //console.log('VideoCap.onmount');
+    navigator.mediaDevices.enumerateDevices().then((devices) => {
+      let devlist = [el('option', 'Select Camera')];
+      devices.filter((d) => d.kind === 'videoinput').forEach((k,v) => {
+        devlist.push(el('option', {'value':k.deviceId}, k.label));
+      });
+      if (devlist.length > 1) {
+        this.elSelectVideoDevice.addEventListener('input',this.selectVideoDevice,false);
+        setChildren(this.elSelectVideoDevice, devlist);
+        this.elSelectVideoDevice.style.display = 'block';        
+      }
+    });
+  }
+  videoOpen = (stream) => {
+    //console.log('onVideoOpen');
+    this.elVideo.style.display = 'block';
+    this.elVideo.srcObject = stream;
+    this.elVideo.play();
+  }
+  videoError = (err) => {
+    this.elStatus.innerText = err.name + ': Allow access to camera, and try again.';
+  }
+  selectVideoDevice = (evt) => {
+    //console.log('selectVideoDevice', this.elSelectVideoDevice.value, evt);
+    if (this.elSelectVideoDevice.value != 'Select Camera') {
+      navigator.mediaDevices.getUserMedia({
+          'audio':false, 
+          'video':{'deviceId': this.elSelectVideoDevice.value}
+      }).then(this.videoOpen).catch(this.videoError);
+      //no need for elSelectVideoDevice anymore
+      this.elSelectVideoDevice.style.display = 'none';
+      this.elSelectVideoDevice.removeEventListener('input',this.selectVideoDevice,false);
+      this.elFile.style.display = 'none';
+      this.elFile.removeEventListener('change', this.fileChange, false);
+    }
   }
   fileChange = (evt) => {
     //console.log('fileChange', evt);
@@ -231,6 +268,9 @@ class VideoCap {
     }
     this.elVideo.src = URL.createObjectURL(this.elFile.files[0]);
     this.elFile.style.display = 'none';
+    this.elFile.removeEventListener('change', this.fileChange, false);
+    this.elSelectVideoDevice.style.display = 'none';
+    this.elSelectVideoDevice.removeEventListener('input',this.selectVideoDevice,false);
   }
   videoLoadedMetaData = (evt) => {
     //console.log('videoLoadedMetaData');
@@ -244,9 +284,7 @@ class VideoCap {
     this.overlayY = this.elOverlay.el.offsetTop;
     this.elOverlayCanvas.style.left = this.overlayX + 'px';
     this.elOverlayCanvas.style.top = this.overlayY + 'px';
-    //since canvas width/height are set style set is not needed
-    //this.elOverlayCanvas.style.width = this.elOverlayCanvas.width + 'px';
-    //this.elOverlayCanvas.style.height = this.elOverlayCanvas.height + 'px';
+    //since canvas width/height are set style.width/height is not needed
   }
   videoPlay = (evt) => {
     //this.elStatus.innerText = 'Capturing...';
