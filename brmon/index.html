@@ -58,17 +58,30 @@ function saveToFile(data, fileName, type) {
 class Overlay {
   constructor(options) {
     //note: parent-position-should-be-relative-then child-absolute - makes child fixed relative to parent
+    this.options = options;
+    if (options.x == null) { this.options.x = 0; }
+    if (options.y == null) { this.options.y = 0; }
+    if (options.w == null) { this.options.w = 75; }
+    if (options.h == null) { this.options.h = 75; }
     this.moveResizeEl = options.moveResizeEl;
     this.onMove = options.onMove;
     this.onResize = options.onResize;
+    //note: default display is none
     this.el = el('.absolute.flex.ba.bw1.b--blue.pointer.w3.h3', 
-      {style:{resize:'both', draggable:true, overflow:'auto', display:(options.display || 'block')}},
+      {style:{resize:'both', draggable:true, overflow:'auto', display:'none'}},
     )
     this.ro = new ResizeObserver(this.resize).observe(this.el);
     this.el.addEventListener('mousedown', this.moveStart, false);
     if ('ontouchstart' in window) {
       this.el.addEventListener('touchstart', this.moveStart, false);      
     }
+  }
+  onmount() {
+    //console.log('Overlay.onmount', this.options);
+    this.el.style.width = this.options.w + 'px';
+    this.el.style.height = this.options.h + 'px';
+    this.el.style.left = this.options.x + 'px';
+    this.el.style.top = this.options.y + 'px';
   }
   //note: resize occurs automatically due to ResizeObserver - and onmount of parent needs to set initial size not here
   resize = (evt) => {
@@ -177,17 +190,22 @@ class VideoCap {
     this.el = el('.relative.flex.justify-center.items-center', [
       this.elVideo = el('video', {controls:true, style:{display:'none'}}),
       //this.elVideo = el('video', {src:'test.mkv', style:{display:'none'}}),
-      this.elGraph = el('canvas.absolute.self-start.w-100.h4.bg-black.o-70', {style:{display:'none'}}),
-      this.elOverlayCanvas = el('canvas.absolute',{style:{display:'none'}}),
-      this.elOverlay = new Overlay({moveResizeEl: this.elOverlayCanvas,
-        display:'none',
+      this.elGraph = el('canvas.absolute.self-start.w-100.h3.bg-black.o-70', {style:{display:'none'}}),
+      //note: not hiding Overlay/Canvas as initial size/position goes for a toss then
+      this.elOverlayCanvas = el('canvas.absolute'),
+      this.elOverlay = new Overlay({
+        moveResizeEl: this.elOverlayCanvas,
+        x:this.options.x,
+        y:this.options.y,
+        w:this.options.w,
+        h:this.options.h,
         onMove: this.overlayMove,
         onResize: this.overlayResize}),
-      this.topBar = el('.absolute.self-start.sans-serif.f3.pa1.bg-blue.white', 
+      this.topBar = el('.absolute.self-start.sans-serif.f5.pa1.bg-blue.white', 
         [this.elStatus = el('span.pointer'),
          this.elSave = el('span.pointer', {style:{display:'none'}}, 'Save')
       ]),
-      this.elFile = el('input', {type:'file', accept: 'video/*'}),
+      this.elFile = el('input.absolute.self-start', {type:'file', accept: 'video/*'}),
     ]);
     this.lastVideoTime = 0;
     this.lastFrameTime = 0;
@@ -201,6 +219,9 @@ class VideoCap {
     this.elVideo.addEventListener('ended',this.videoEnded,false);
     this.elSave.addEventListener('click',this.saveClick,false);
     this.elFile.addEventListener('change', this.fileChange, false);
+  }
+  onmount() {
+    //console.log('VideoCap.onmount');
   }
   fileChange = (evt) => {
     //console.log('fileChange', evt);
@@ -338,7 +359,6 @@ class VideoCap {
       // draw modified Image on overlayCanvas
       ctxOverlay.putImageData(rgba, 0, 0);
 
-
       let now = new Date().getTime();
       //fps is for graph updata only
       if ((now - this.lastFrameTime) >= this.frameInterval) {
@@ -364,8 +384,8 @@ class App {
       let urlParams = new URLSearchParams(window.location.search);
       let x = parseInt(urlParams.get('x') || '0') || 0;
       let y = parseInt(urlParams.get('y') || '0') || 0;
-      let w = parseInt(urlParams.get('w') || '0') || 0;
-      let h = parseInt(urlParams.get('h') || '0') || 0;
+      let w = parseInt(urlParams.get('w') || '75') || 75;
+      let h = parseInt(urlParams.get('h') || '75') || 75;
       if (x < 0) { x = 0 };
       if (y < 0) { y = 0 };
       if (w <= 0) {
@@ -376,8 +396,8 @@ class App {
       }
       let fps = parseInt(urlParams.get('fps') || '15') || 15;
       fps = ((fps > 0) && (fps <= 30)) ? fps : 15;
-      let gmax = parseInt(urlParams.get('gmax') || '127') || 127;
-      gmax = ((gmax >= 0) && (gmax <= 255)) ? gmax : 127;
+      let gmax = parseInt(urlParams.get('gmax') || '126') || 126;
+      gmax = ((gmax >= 0) && (gmax <= 255)) ? gmax : 126;
 
       this.el = el('#app.w-100.h-100.flex.justify-center.items-center', 
         this.videocap = new VideoCap({x:x, y:y, w:w, h:h, fps:fps, gmax:gmax})
